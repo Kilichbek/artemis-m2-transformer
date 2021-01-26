@@ -1,16 +1,6 @@
-# M²: Meshed-Memory Transformer
-This repository contains the reference code for the paper _[Meshed-Memory Transformer for Image Captioning](https://arxiv.org/abs/1912.08226)_ (CVPR 2020).
-
-Please cite with the following BibTeX:
-
-```
-@inproceedings{cornia2020m2,
-  title={{Meshed-Memory Transformer for Image Captioning}},
-  author={Cornia, Marcella and Stefanini, Matteo and Baraldi, Lorenzo and Cucchiara, Rita},
-  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
-  year={2020}
-}
-```
+# ArtEmis M²: Meshed-Memory Transformer for Affective Image Captioning (official implementation)
+The original repository for [M2: Meshed-Memory Transformer for Image Captioning](https://github.com/aimagelab/meshed-memory-transformer)
+<!-- 
 <p align="center">
   <img src="images/m2.png" alt="Meshed-Memory Transformer" width="320"/>
 </p>
@@ -80,3 +70,4 @@ python train.py --exp_name m2_transformer --batch_size 50 --m 40 --head 8 --warm
 
 #### References
 [1] P. Anderson, X. He, C. Buehler, D. Teney, M. Johnson, S. Gould, and L. Zhang. Bottom-up and top-down attention for image captioning and visual question answering. In _Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition_, 2018.
+-->
