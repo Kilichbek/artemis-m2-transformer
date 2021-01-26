@@ -1,13 +1,14 @@
 import random
-from data import ImageDetectionsField, TextField, RawField
-from data import COCO, DataLoader
+from data import TextField, RawField, ArtEmisDetectionsField, EmotionField
+from data import DataLoader, ArtEmis
 import evaluation
 from evaluation import PTBTokenizer, Cider
 from models.transformer import Transformer, MemoryAugmentedEncoder, MeshedDecoder, ScaledDotProductAttentionMemory
 import torch
 from torch.optim import Adam
 from torch.optim.lr_scheduler import LambdaLR
-from torch.nn import NLLLoss
+from torch.nn import NLLLoss 
+from torch.nn import functional as F
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 import argparse, os, pickle
@@ -20,15 +21,21 @@ random.seed(1234)
 torch.manual_seed(1234)
 np.random.seed(1234)
 
-
-def evaluate_loss(model, dataloader, loss_fn, text_field):
+def evaluate_loss(model, emotion_encoder, dataloader, loss_fn, text_field):
     # Validation loss
     model.eval()
+    emotion_encoder.eval()
     running_loss = .0
     with tqdm(desc='Epoch %d - validation' % e, unit='it', total=len(dataloader)) as pbar:
         with torch.no_grad():
-            for it, (detections, captions) in enumerate(dataloader):
+            for it, (detections, captions, emotions) in enumerate(dataloader):
                 detections, captions = detections.to(device), captions.to(device)
+                emotions = F.one_hot(emotions, num_classes=9)
+                emotions = emotions.type(torch.FloatTensor)
+                emotions = emotions.to(device)
+                enc_emotions = emotion_encoder(emotions)
+                enc_emotions = enc_emotions.unsqueeze(1).repeat(1, detections.shape[1], 1)
+                detections = torch.cat([detections, enc_emotions], dim=-1)
                 out = model(detections, captions)
                 captions = captions[:, 1:].contiguous()
                 out = out[:, :-1].contiguous()
@@ -43,14 +50,25 @@ def evaluate_loss(model, dataloader, loss_fn, text_field):
     return val_loss
 
 
-def evaluate_metrics(model, dataloader, text_field):
+def evaluate_metrics(model, emotion_encoder, dataloader, text_field):
     import itertools
     model.eval()
+    emotion_encoder.eval()
     gen = {}
     gts = {}
     with tqdm(desc='Epoch %d - evaluation' % e, unit='it', total=len(dataloader)) as pbar:
-        for it, (images, caps_gt) in enumerate(iter(dataloader)):
+        for it, (images, emotions_caps_pair) in enumerate(iter(dataloader)):
+            caps_gt, emotions = emotions_caps_pair
+            
             images = images.to(device)
+
+            emotions = torch.stack([torch.mode(emotion).values for emotion in emotions])
+            emotions = F.one_hot(emotions, num_classes=9)
+            emotions = emotions.type(torch.FloatTensor)
+            emotions = emotions.to(device)
+            enc_emotions = emotion_encoder(emotions)
+            enc_emotions = enc_emotions.unsqueeze(1).repeat(1, images.shape[1], 1)
+            images = torch.cat([images, enc_emotions], dim=-1)
             with torch.no_grad():
                 out, _ = model.beam_search(images, 20, text_field.vocab.stoi['<eos>'], 5, out_size=1)
             caps_gen = text_field.decode(out, join_words=False)
@@ -66,14 +84,22 @@ def evaluate_metrics(model, dataloader, text_field):
     return scores
 
 
-def train_xe(model, dataloader, optim, text_field):
+def train_xe(model, emotion_encoder, dataloader, optim, text_field):
     # Training with cross-entropy
     model.train()
+    emotion_encoder.train()
     scheduler.step()
     running_loss = .0
     with tqdm(desc='Epoch %d - train' % e, unit='it', total=len(dataloader)) as pbar:
-        for it, (detections, captions) in enumerate(dataloader):
+        for it, (detections, captions, emotions) in enumerate(dataloader):
+
             detections, captions = detections.to(device), captions.to(device)
+            emotions = F.one_hot(emotions, num_classes=9)
+            emotions = emotions.type(torch.FloatTensor)
+            emotions = emotions.to(device)
+            enc_emotions = emotion_encoder(emotions)
+            enc_emotions = enc_emotions.unsqueeze(1).repeat(1, detections.shape[1], 1)
+            detections = torch.cat([detections, enc_emotions], dim=-1)
             out = model(detections, captions)
             optim.zero_grad()
             captions_gt = captions[:, 1:].contiguous()
@@ -93,11 +119,12 @@ def train_xe(model, dataloader, optim, text_field):
     return loss
 
 
-def train_scst(model, dataloader, optim, cider, text_field):
+def train_scst(model, emotion_encoder, dataloader, optim, cider, text_field):
     # Training with self-critical
     tokenizer_pool = multiprocessing.Pool()
     running_reward = .0
     running_reward_baseline = .0
+    emotion_encoder.train()
     model.train()
     running_loss = .0
     seq_len = 20
@@ -158,14 +185,22 @@ if __name__ == '__main__':
     writer = SummaryWriter(log_dir=os.path.join(args.logs_folder, args.exp_name))
 
     # Pipeline for image regions
-    image_field = ImageDetectionsField(detections_path=args.features_path, max_detections=50, load_in_tmp=False)
+    image_field = ArtEmisDetectionsField(detections_path=args.features_path, max_detections=50, load_in_tmp=False)
 
     # Pipeline for text
     text_field = TextField(init_token='<bos>', eos_token='<eos>', lower=True, tokenize='spacy',
                            remove_punctuation=True, nopoints=False)
 
+    # Pipeline for emotion
+    emotions = [
+        'amusement', 'awe', 'contentment', 'excitement', 
+        'anger', 'disgust', 'fear', 'sadness', 'something else'
+        ]
+    emotion_field = EmotionField(emotions=emotions)
+
     # Create the dataset
-    dataset = COCO(image_field, text_field, 'coco/images/', args.annotation_folder, args.annotation_folder)
+    path_to_images = '/wiki_art_paintings/rescaled_600px_max_side/'
+    dataset = ArtEmis(image_field, text_field, emotion_field, path_to_images, args.annotation_folder)
     train_dataset, val_dataset, test_dataset = dataset.splits
 
     if not os.path.isfile('vocab_%s.pkl' % args.exp_name):
@@ -177,15 +212,19 @@ if __name__ == '__main__':
 
     # Model and dataloaders
     encoder = MemoryAugmentedEncoder(3, 0, attention_module=ScaledDotProductAttentionMemory,
-                                     attention_module_kwargs={'m': args.m})
+                                     attention_module_kwargs={'m': args.m}, d_in=2058)
     decoder = MeshedDecoder(len(text_field.vocab), 54, 3, text_field.vocab.stoi['<pad>'])
     model = Transformer(text_field.vocab.stoi['<bos>'], encoder, decoder).to(device)
+    emotion_encoder = torch.nn.Sequential(
+        torch.nn.Linear(9,10)
+    )
+    emotion_encoder.to(device)
 
-    dict_dataset_train = train_dataset.image_dictionary({'image': image_field, 'text': RawField()})
+    dict_dataset_train = train_dataset.image_dictionary({'image': image_field, 'text': RawField(), 'emotion': emotion_field})
     ref_caps_train = list(train_dataset.text)
     cider_train = Cider(PTBTokenizer.tokenize(ref_caps_train))
-    dict_dataset_val = val_dataset.image_dictionary({'image': image_field, 'text': RawField()})
-    dict_dataset_test = test_dataset.image_dictionary({'image': image_field, 'text': RawField()})
+    dict_dataset_val = val_dataset.image_dictionary({'image': image_field, 'text': RawField(), 'emotion': emotion_field})
+    dict_dataset_test = test_dataset.image_dictionary({'image': image_field, 'text': RawField(), 'emotion': emotion_field})
 
 
     def lambda_lr(s):
@@ -193,9 +232,10 @@ if __name__ == '__main__':
         s += 1
         return (model.d_model ** -.5) * min(s ** -.5, s * warm_up ** -1.5)
 
+    params = list(model.parameters()) + list(emotion_encoder.parameters())
 
     # Initial conditions
-    optim = Adam(model.parameters(), lr=1, betas=(0.9, 0.98))
+    optim = Adam(params, lr=1, betas=(0.9, 0.98))
     scheduler = LambdaLR(optim, lambda_lr)
     loss_fn = NLLLoss(ignore_index=text_field.vocab.stoi['<pad>'])
     use_rl = False
@@ -236,20 +276,20 @@ if __name__ == '__main__':
         dict_dataloader_test = DataLoader(dict_dataset_test, batch_size=args.batch_size // 5)
 
         if not use_rl:
-            train_loss = train_xe(model, dataloader_train, optim, text_field)
+            train_loss = train_xe(model,emotion_encoder, dataloader_train, optim, text_field)
             writer.add_scalar('data/train_loss', train_loss, e)
         else:
-            train_loss, reward, reward_baseline = train_scst(model, dict_dataloader_train, optim, cider_train, text_field)
+            train_loss, reward, reward_baseline = train_scst(model,emotion_encoder, dict_dataloader_train, optim, cider_train, text_field)
             writer.add_scalar('data/train_loss', train_loss, e)
             writer.add_scalar('data/reward', reward, e)
             writer.add_scalar('data/reward_baseline', reward_baseline, e)
 
         # Validation loss
-        val_loss = evaluate_loss(model, dataloader_val, loss_fn, text_field)
+        val_loss = evaluate_loss(model,emotion_encoder, dataloader_val, loss_fn, text_field)
         writer.add_scalar('data/val_loss', val_loss, e)
 
         # Validation scores
-        scores = evaluate_metrics(model, dict_dataloader_val, text_field)
+        scores = evaluate_metrics(model, emotion_encoder, dict_dataloader_val, text_field)
         print("Validation scores", scores)
         val_cider = scores['CIDEr']
         writer.add_scalar('data/val_cider', val_cider, e)
@@ -257,15 +297,16 @@ if __name__ == '__main__':
         writer.add_scalar('data/val_bleu4', scores['BLEU'][3], e)
         writer.add_scalar('data/val_meteor', scores['METEOR'], e)
         writer.add_scalar('data/val_rouge', scores['ROUGE'], e)
-
+    
         # Test scores
-        scores = evaluate_metrics(model, dict_dataloader_test, text_field)
+        scores = evaluate_metrics(model, emotion_encoder, dict_dataloader_test, text_field)
         print("Test scores", scores)
         writer.add_scalar('data/test_cider', scores['CIDEr'], e)
         writer.add_scalar('data/test_bleu1', scores['BLEU'][0], e)
         writer.add_scalar('data/test_bleu4', scores['BLEU'][3], e)
         writer.add_scalar('data/test_meteor', scores['METEOR'], e)
         writer.add_scalar('data/test_rouge', scores['ROUGE'], e)
+    
 
         # Prepare for next epoch
         best = False
@@ -279,6 +320,9 @@ if __name__ == '__main__':
         switch_to_rl = False
         exit_train = False
         if patience == 5:
+            print('patience reached')
+            exit_train = True
+            '''
             if not use_rl:
                 use_rl = True
                 switch_to_rl = True
@@ -288,6 +332,7 @@ if __name__ == '__main__':
             else:
                 print('patience reached.')
                 exit_train = True
+            '''
 
         if switch_to_rl and not best:
             data = torch.load('saved_models/%s_best.pth' % args.exp_name)
@@ -315,8 +360,12 @@ if __name__ == '__main__':
             'use_rl': use_rl,
         }, 'saved_models/%s_last.pth' % args.exp_name)
 
+        torch.save(emotion_encoder.state_dict(), 'saved_models/%s_emotion_last.pth' % args.exp_name)
+
         if best:
             copyfile('saved_models/%s_last.pth' % args.exp_name, 'saved_models/%s_best.pth' % args.exp_name)
+            copyfile('saved_models/%s_emotion_last.pth' % args.exp_name, 'saved_models/%s_emotion_best.pth' % args.exp_name)
+
 
         if exit_train:
             writer.close()
