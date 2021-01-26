@@ -338,3 +338,17 @@ class ArtEmisDetectionsField(RawField):
             precomp_data = precomp_data[:self.max_detections]
 
         return precomp_data.astype(np.float32)
+
+class EmotionField(RawField):
+    def __init__(self, preprocessing=None, postprocessing=None, emotions=None):
+        if emotions is not None:
+            self.emotion_mapping = { key: value for value, key in enumerate(emotions)}
+        else:
+            self.emotion_mapping = None
+        super(EmotionField, self).__init__(preprocessing, postprocessing)
+
+    def preprocess(self, x):
+
+        if self.emotion_mapping is not None:
+            return self.emotion_mapping[x]
+        return x

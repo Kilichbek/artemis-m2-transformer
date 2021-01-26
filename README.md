@@ -1,10 +1,12 @@
 # ArtEmis M²: Meshed-Memory Transformer for Affective Image Captioning (official implementation)
 The original repository for [M2: Meshed-Memory Transformer for Image Captioning](https://github.com/aimagelab/meshed-memory-transformer)
-<!-- 
-<p align="center">
-  <img src="images/m2.png" alt="Meshed-Memory Transformer" width="320"/>
-</p>
 
+You can explore ArtEmis Dataset [here](http://13.59.56.153:8501/)
+
+<p align="center">
+  <img src="images/teaser.png" alt="Meshed-Memory Transformer" width="320"/>
+</p>
+<!-- 
 ## Environment setup
 Clone the repository and create the `m2release` conda environment using the `environment.yml` file:
 ```
