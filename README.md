@@ -4,7 +4,7 @@ The original repository for [M2: Meshed-Memory Transformer for Image Captioning]
 You can explore ArtEmis Dataset [here](http://13.59.56.153:8501/)
 
 <p align="center">
-  <img src="images/teaser.png" alt="Meshed-Memory Transformer" width="320"/>
+  <img src="images/teaser.png" alt="Meshed-Memory Transformer" width="100%"/>
 </p>
 <!-- 
 ## Environment setup
