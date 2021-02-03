@@ -1,4 +1,9 @@
 # ArtEmis M²: Meshed-Memory Transformer for Affective Image Captioning (official implementation)
+<a href="https://ai.stanford.edu/~optas" target="_blank">Panos Achlioptas</a>, 
+<a href="http://www.lix.polytechnique.fr/~maks" target="_blank">Maks Ovsjanikov</a>,
+<a href="https://kkhaydarov.com" target="_blank">Kilichbek Haydarov</a>,
+<a href="http://www.mohamed-elhoseiny.com/" target="_blank">Mohamed Elhoseiny</a>, 
+<a href="https://geometry.stanford.edu/member/guibas/" target="_blank">Leonidas J. Guibas</a>
 The original repository for [M2: Meshed-Memory Transformer for Image Captioning](https://github.com/aimagelab/meshed-memory-transformer)
 
 You can explore ArtEmis Dataset [here](http://13.59.56.153:8501/)
