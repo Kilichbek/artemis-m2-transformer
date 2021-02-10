@@ -2,6 +2,7 @@
 <a href="https://ai.stanford.edu/~optas" target="_blank">Panos Achlioptas</a>, 
 <a href="http://www.lix.polytechnique.fr/~maks" target="_blank">Maks Ovsjanikov</a>,
 <a href="https://kkhaydarov.com" target="_blank">Kilichbek Haydarov</a>,
+<br>
 <a href="http://www.mohamed-elhoseiny.com/" target="_blank">Mohamed Elhoseiny</a>, 
 <a href="https://geometry.stanford.edu/member/guibas/" target="_blank">Leonidas J. Guibas</a>
 <br>The original repository for [M2: Meshed-Memory Transformer for Image Captioning](https://github.com/aimagelab/meshed-memory-transformer)
