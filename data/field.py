@@ -1,22 +1,25 @@
 # coding: utf8
-from collections import Counter, OrderedDict
-from torch.utils.data.dataloader import default_collate
-from itertools import chain
-import six
-import torch
-import numpy as np
-import h5py
-import os
-import warnings
-import shutil
-import pickle
 import base64
 import csv
+import os
+import pickle
+import shutil
+import sys
+import warnings
+from collections import Counter, OrderedDict
+from itertools import chain
+
+import numpy as np
+import six
+import torch
+from torch.utils.data.dataloader import default_collate
+from tqdm import tqdm
 
 from .dataset import Dataset
-from .vocab import Vocab
 from .utils import get_tokenizer
+from .vocab import Vocab
 
+csv.field_size_limit(sys.maxsize)
 
 class RawField(object):
     """ Defines a general datatype.
@@ -288,22 +291,20 @@ class TextField(RawField):
         return captions
 
 class ArtEmisDetectionsField(RawField):
-    def __init__(self, preprocessing=None, postprocessing=None, detections_path=None, max_detections=100,
-                 sort_by_prob=False, load_in_tmp=True):
+    def __init__(self, preprocessing=None, postprocessing=None, detections_path=None, max_detections=100):
         self.max_detections = max_detections
         
         self.detections_path = detections_path
-        self.sort_by_prob = sort_by_prob
         self.FIELDNAMES = ['image_id', 'image_w','image_h','num_boxes', 'boxes', 'features']
         self.features = dict()
 
-        with open('/path/to/wikiart_split.pkl','rb') as file:
+        # load the list of ('genre/img_names', id) and create dictionary
+        with open(os.path.join(detections_path,'wikiart_split.pkl'),'rb') as file:
             self.paints_ids_dict = dict(pickle.load(file))
-
-        with open(self.detections_path, "r+") as tsv_in_file:
+        
+        with open(os.path.join(detections_path,'tmp.csv'), "r+") as tsv_in_file:
             reader = csv.DictReader(tsv_in_file, delimiter='\t', fieldnames = self.FIELDNAMES)
             for item in reader:
-            
                 item['image_id'] = int(item['image_id'])
                 item['image_h'] = int(item['image_h'])
                 item['image_w'] = int(item['image_w'])
@@ -315,22 +316,21 @@ class ArtEmisDetectionsField(RawField):
                     temp = np.frombuffer(buf, dtype=np.float32)
                     item[field] = temp.reshape((item['num_boxes'],-1))
                 self.features[item['image_id']] = item['features']
-
-        self.not_found = set()
         
+        self.not_found = set()
         super(ArtEmisDetectionsField, self).__init__(preprocessing, postprocessing)
 
-    def preprocess(self, x, avoid_precomp=False):
+    def preprocess(self, x):
 
         id = self.paints_ids_dict[x]
+        
         try:
             precomp_data = self.features[id]
         except KeyError:
             self.not_found.add(id)
-            warnings.warn('Could not find detections for %d (Total Missing: %d)' % (id, len(self.not_found)))
+            warnings.warn('Could not find detections for %s (Total Missing: %d)' % (x, len(self.not_found)))
             precomp_data = np.random.rand(10, 2048)
         
-        precomp_data = np.random.rand(10, 2048)
         delta = self.max_detections - precomp_data.shape[0]
         if delta > 0:
             precomp_data = np.concatenate([precomp_data, np.zeros((delta, precomp_data.shape[1]))], axis=0)
@@ -341,14 +341,9 @@ class ArtEmisDetectionsField(RawField):
 
 class EmotionField(RawField):
     def __init__(self, preprocessing=None, postprocessing=None, emotions=None):
-        if emotions is not None:
-            self.emotion_mapping = { key: value for value, key in enumerate(emotions)}
-        else:
-            self.emotion_mapping = None
+        
+        self.emotion_mapping = { key: value for value, key in enumerate(emotions)}
         super(EmotionField, self).__init__(preprocessing, postprocessing)
 
     def preprocess(self, x):
-
-        if self.emotion_mapping is not None:
-            return self.emotion_mapping[x]
-        return x
+        return self.emotion_mapping[x]

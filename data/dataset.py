@@ -1,11 +1,16 @@
-import os
-import numpy as np
-import itertools
 import collections
+import itertools
+import os
+import unicodedata
+
+import numpy as np
+import pandas as pd
 import torch
+from skimage import io
+from skimage.transform import resize
+
 from .example import Example
 from .utils import nostdout
-import pandas as pd
 
 class Dataset(object):
     def __init__(self, examples, fields):
@@ -142,9 +147,11 @@ class PairedDataset(Dataset):
     def __init__(self, examples, fields):
         assert ('image' in fields)
         assert ('text' in fields)
+        assert('emotion' in fields)
         super(PairedDataset, self).__init__(examples, fields)
         self.image_field = self.fields['image']
         self.text_field = self.fields['text']
+        self.emotion_field = self.fields['emotion']
 
     def image_set(self):
         img_list = [e.image for e in self.examples]
@@ -178,10 +185,10 @@ class PairedDataset(Dataset):
 
 
 class ArtEmis(PairedDataset):
-    def __init__(self, image_field, text_field, emotion_field, img_root, ann_root):
+    def __init__(self, image_field, text_field, emotion_field, ann_root):
         self.df = pd.read_csv(ann_root)
         with nostdout():
-            self.train_examples, self.val_examples, self.test_examples = self.get_samples(self.df,img_root)
+            self.train_examples, self.val_examples, self.test_examples = self.get_samples(self.df)
         examples = self.train_examples + self.val_examples + self.test_examples
         super(ArtEmis, self).__init__(examples, {'image': image_field, 'text': text_field, 'emotion': emotion_field})
 
@@ -193,12 +200,12 @@ class ArtEmis(PairedDataset):
         return train_split, val_split, test_split
 
     @classmethod
-    def get_samples(cls, df,img_root):
+    def get_samples(cls, df):
         train_samples = []
         val_samples = []
         test_samples = []
 
-        for i,row in df.iterrows():
+        for i, row in df.iterrows():
             
             split = row['split']
             painting = row['painting']
@@ -207,9 +214,8 @@ class ArtEmis(PairedDataset):
             emotion = row['emotion']
             filename = '/' + style + '/' + painting
 
-            #data_entry = {'image': os.path.join(img_root, filename), 'text': caption, 'emotion': emotion}
             data_entry = {
-                'image': os.path.join(img_root, filename), 
+                'image': filename, 
                 'text': caption, 
                 'emotion': emotion
                 }
@@ -223,3 +229,21 @@ class ArtEmis(PairedDataset):
                 test_samples.append(example)
         
         return train_samples, val_samples, test_samples
+
+
+class NNDataset(torch.utils.data.Dataset):
+    def __init__(self, img_names, img_root="wiki_art_paintings"):
+        self.img_names = img_names
+        self.img_root = img_root
+    
+    def __len__(self):
+        return len(self.img_names)
+    
+    def __getitem__(self, index):
+        img_name = self.img_names[index]
+        img_name = unicodedata.normalize('NFD', img_name)
+        img = io.imread(os.path.join(self.img_root, img_name))
+        img = resize(img, (224, 224))
+        img = np.moveaxis(img, [0, 1, 2], [-2, -1, -3])
+        img = torch.from_numpy(img).float()
+        return img
