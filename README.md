@@ -1,4 +1,3 @@
-# Note: This repo is under development
 # ArtEmis M²: Meshed-Memory Transformer for Affective Image Captioning (official implementation)
 <a href="https://ai.stanford.edu/~optas" target="_blank">Panos Achlioptas</a>, 
 <a href="http://www.lix.polytechnique.fr/~maks" target="_blank">Maks Ovsjanikov</a>,
