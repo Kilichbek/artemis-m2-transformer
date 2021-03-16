@@ -7,7 +7,7 @@
 <a href="https://geometry.stanford.edu/member/guibas/" target="_blank">Leonidas J. Guibas</a>
 <br>The original repository for [M2: Meshed-Memory Transformer for Image Captioning](https://github.com/aimagelab/meshed-memory-transformer)
 
-You can explore ArtEmis Dataset [here](http://13.59.56.153:8501/)
+Download Bounding Box Features [here](https://drive.google.com/file/d/1PJyaiuPgPAH8uwkAUzezvli89E4EJFSZ/view?usp=sharing)
 
 <p align="center">
   <img src="images/teaser.png" alt="Meshed-Memory Transformer" width="100%"/>
