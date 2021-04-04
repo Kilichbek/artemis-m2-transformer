@@ -1,5 +1,8 @@
-# ArtEmis Neural Speaker M²: Meshed-Memory Transformer (official implementation)
-This repo contains some neural speakers mentioned in the paper [2]. The original repository for M2-Transformers is [here](https://github.com/aimagelab/meshed-memory-transformer).
+# ArtEmis Speaker Tools B
+This repo contains following things related to [2]:
+1. User Interfaces used in human studies for MTurk Experiments
+2. Evaluation Tools 
+3. Neural Speakers (nearest neighbor baseline, basic & grounded versions of M2 transformers)
 
 ## Data preparation
 Please, prepare annotations and detection features files for the ArtEmis dataset to run the code:
@@ -73,6 +76,7 @@ Some generations from the neural speakers:
 </p>
 
 #### References
-[1] [Faster R-CNN with model pretrained on Visual Genome](https://github.com/shilrley6/Faster-R-CNN-with-model-pretrained-on-Visual-Genome)
+[1] [Faster R-CNN with model pretrained on Visual Genome](https://github.com/shilrley6/Faster-R-CNN-with-model-pretrained-on-Visual-Genome)<br>
 [2] [ArtEmis: Affective Language for Visual Art (Panos Achlioptas, Maks Ovsjanikov, Kilichbek Haydarov, Mohamed Elhoseiny, Leonidas Guibas)
-](https://arxiv.org/abs/2101.07396)
+](https://arxiv.org/abs/2101.07396)<br>
+[3][Meshed Memory Transformer](https://github.com/aimagelab/meshed-memory-transformer).

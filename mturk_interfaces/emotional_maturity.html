@@ -1,0 +1,136 @@
+<title></title>
+<div class="row col-xs-12 col-md-12">
+<section class="container" id="TaggingOfAnImage" style="margin-bottom:15px; padding: 2px 2px; font-family: Verdana, Geneva, sans-serif; color:#333333; font-size:0.9em;">
+<div class="panel panel-primary">
+<div class="panel-heading"><strong>Instructions</strong></div>
+
+<div class="panel-body">
+<p style="font-family: Verdana, Geneva, sans-serif; font-size: 11.7px;"><span style="color: rgb(34, 34, 34); font-family: arial, sans-serif; font-size: 12.8px;">Please, look at the image and its description on the right  <strong>for 30 seconds </strong>  before you answer this question!</span></p>
+</div>
+</div>
+
+<table border="1" cellpadding="0" cellspacing="0" style="width:900px;">
+	<tbody>
+		<tr>
+			<td valign="top">
+			<h2 class="title" style="color: rgb(51, 51, 51);">Image</h2>
+
+			<p style="font-family: Verdana, Geneva, sans-serif; font-size: 12.6px; line-height: 18px; text-align: center;">
+			    <img alt="image_url" id="scream" src="${kn_img_url}" width=512 height=512 style="align: center;" />
+			    <canvas height="600" id="myCanvas" width="600"></canvas>
+			</p>
+			</td>
+			<td valign="top">
+			<table border="1" cellpadding="1" cellspacing="1" style="width:700px;">
+				<tbody>
+					<tr>
+						<td valign="top">
+                            <h1 class="questiontext">
+                                <strong><span style="color: rgb(0, 0, 255);">Image Description:</span> ${h1}</strong>
+                            </h1>
+                            
+						</td>
+					</tr>
+			
+					<tr>
+						<td valign="top">
+                            <h2 class="questiontext">
+                                Do you think this image description can be created by a <strong>4 year old or younger</strong> child representing his/her <strong>emotional/cognitive</strong> maturity?
+                            </h2>
+
+                            <div class="answers">
+                                <div class="answercontainer">
+                                    <input class="radio-input" name="Q2_answer" type="radio" value="1" />
+                                    <span class="answernumber">1</span>
+                                    (Yes)
+                                </div>
+                                <div class="answercontainer">
+                                    <input class="radio-input" name="Q2_answer" type="radio" value="0" />
+                                    <span class="answernumber">2</span>
+                                    (No)
+                                </div>
+                            </div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			</td>
+		</tr>
+	</tbody>
+</table>
+</section>
+<script>
+
+</script></div>
+
+<style type="text/css">
+.question-select {
+    text-align: center;
+}
+
+.title{
+  text-align: center;
+}
+.questiontext {
+    font-family: Verdana, Geneva, sans-serif; font-size: 12.6px; line-height: 18px; text-align: center;
+}
+
+.answers {
+    text-align: center;
+    font-family: Verdana, Geneva, sans-serif; 
+    font-size: 12.6px; 
+    line-height: 18px; 
+    background-color: rgb(255, 255, 255);
+    padding-bottom: 20px;
+}
+    
+.answernumber {
+    padding-left: 2px;
+    padding-right; 2px;
+}
+
+.answercontainer {
+    display: inline-block
+}
+
+.radio-input {
+    text-align: center;
+}
+
+/* ------------- CSS Popup Image ------------- */ 
+#thumbwrap { 
+    width:252px; 
+    height:252px; 
+} 
+
+.thumb { 
+    float:left; /* must be floated for same cross browser position of larger image */ 
+    position:relative; 
+    margin:3px; 
+} 
+
+.thumb img { 
+    border:1px solid #000; 
+    vertical-align:bottom; 
+    
+} 
+
+.thumb:hover { 
+    border:0; /* IE6 needs this to show large image */ 
+    z-index:1; 
+    
+} 
+
+.thumb span { 
+    position:absolute; 
+    visibility:hidden; 
+} 
+
+.thumb:hover span { 
+    visibility:visible; 
+    top:37px; 
+    left:37px; 
+}
+
+</style>
+<link href="https://s3.amazonaws.com/mturk-public/bs30/css/bootstrap.min.css" rel="stylesheet" />
