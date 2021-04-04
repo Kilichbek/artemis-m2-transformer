@@ -65,9 +65,9 @@ def evaluate_metrics(model, dataloader, text_field, emotion_encoder=None):
     gen = {}
     gts = {}
     with tqdm(desc='Epoch %d - evaluation' % e, unit='it', total=len(dataloader)) as pbar:
-        for it, (images, caps_gt, emotions) in enumerate(iter(dataloader)):
+        for it, (images, caps_emos) in enumerate(iter(dataloader)):
             images = images.to(device)
-            
+            caps_gt, emotions = caps_emos
             if emotion_encoder is not None:
                 emotions = torch.stack([torch.mode(emotion).values for emotion in emotions]) # pick the most frequent emotion
                 emotions = F.one_hot(emotions, num_classes=9)
@@ -247,7 +247,6 @@ if __name__ == '__main__':
 
         train_loss = train_xe(model, dataloader_train, optim, text_field, emotion_encoder)
         writer.add_scalar('data/train_loss', train_loss, e)
-        image_field.save_not_found()
 
         # Validation loss
         val_loss = evaluate_loss(model, dataloader_val, loss_fn, text_field, emotion_encoder)
@@ -301,11 +300,13 @@ if __name__ == '__main__':
             'patience': patience,
             'best_cider': best_cider,
         }, 'saved_models/%s_last.pth' % args.exp_name)
-
-        torch.save(emotion_encoder.state_dict(), 'saved_models/%s_last.pth' % args.exp_name)
+        if args.use_emotion_labels:
+            torch.save(emotion_encoder.state_dict(), 'saved_models/%s_emo_last.pth' % args.exp_name)
 
         if best:
             copyfile('saved_models/%s_last.pth' % args.exp_name, 'saved_models/%s_best.pth' % args.exp_name)
+            if args.use_emotion_labels:
+                copyfile('saved_models/%s_emo_last.pth' % args.exp_name, 'saved_models/%s_emo_best.pth' % args.exp_name)
 
         if exit_train:
             writer.close()

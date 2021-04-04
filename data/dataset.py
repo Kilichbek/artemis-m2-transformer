@@ -6,8 +6,6 @@ import unicodedata
 import numpy as np
 import pandas as pd
 import torch
-from skimage import io
-from skimage.transform import resize
 
 from .example import Example
 from .utils import nostdout
@@ -211,7 +209,10 @@ class ArtEmis(PairedDataset):
             painting = row['painting']
             style = row['art_style']
             caption = row['utterance']
-            emotion = row['emotion']
+            if split == 'test':
+                emotion = row['grounding_emotion']
+            else:
+                emotion = row['emotion']
             filename = '/' + style + '/' + painting
 
             data_entry = {
@@ -229,21 +230,3 @@ class ArtEmis(PairedDataset):
                 test_samples.append(example)
         
         return train_samples, val_samples, test_samples
-
-
-class NNDataset(torch.utils.data.Dataset):
-    def __init__(self, img_names, img_root="wiki_art_paintings"):
-        self.img_names = img_names
-        self.img_root = img_root
-    
-    def __len__(self):
-        return len(self.img_names)
-    
-    def __getitem__(self, index):
-        img_name = self.img_names[index]
-        img_name = unicodedata.normalize('NFD', img_name)
-        img = io.imread(os.path.join(self.img_root, img_name))
-        img = resize(img, (224, 224))
-        img = np.moveaxis(img, [0, 1, 2], [-2, -1, -3])
-        img = torch.from_numpy(img).float()
-        return img

@@ -26,9 +26,9 @@ def predict_captions(model, dataloader, text_field, emotion_encoder=None):
     gts = {}
     with tqdm(desc='Evaluation', unit='it', total=len(dataloader)) as pbar:
         
-        for it, (images, caps_gt, emotions) in enumerate(iter(dataloader)):
+        for it, (images, caps_emo_pair) in enumerate(iter(dataloader)):
             images = images.to(device)
-
+            caps_gt, emotions = caps_emo_pair
             if emotion_encoder is not None:
                 emotions = torch.stack([torch.mode(emotion).values for emotion in emotions])
                 emotions = F.one_hot(emotions, num_classes=9)
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     print('Meshed-Memory Transformer Evaluation')
 
     # Pipeline for image regions
-    image_field = ArtEmisDetectionsField(detections_path=args.features_path, max_detections=50, load_in_tmp=False)
+    image_field = ArtEmisDetectionsField(detections_path=args.features_path, max_detections=50)
 
     # Pipeline for text
     text_field = TextField(init_token='<bos>', eos_token='<eos>', lower=True, tokenize='spacy',
@@ -113,7 +113,7 @@ if __name__ == '__main__':
 
     if emotion_encoder is not None:
         emotion_encoder.to(device)
-        fname = 'saved_models/%s_emotion_best.pth' % args.exp_name
+        fname = 'saved_models/%s_emo_best.pth' % args.exp_name
         data = torch.load(fname)
         emotion_encoder.load_state_dict(data)
 

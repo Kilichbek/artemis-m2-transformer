@@ -1,54 +1,29 @@
-# ArtEmis M²: Meshed-Memory Transformer for Affective Image Captioning (official implementation)
-<a href="https://ai.stanford.edu/~optas" target="_blank">Panos Achlioptas</a>, 
-<a href="http://www.lix.polytechnique.fr/~maks" target="_blank">Maks Ovsjanikov</a>,
-<a href="https://kkhaydarov.com" target="_blank">Kilichbek Haydarov</a>,
-<br>
-<a href="http://www.mohamed-elhoseiny.com/" target="_blank">Mohamed Elhoseiny</a>, 
-<a href="https://geometry.stanford.edu/member/guibas/" target="_blank">Leonidas J. Guibas</a>
-<br>The original repository for [M2: Meshed-Memory Transformer for Image Captioning](https://github.com/aimagelab/meshed-memory-transformer)
+# ArtEmis Neural Speaker M²: Meshed-Memory Transformer (official implementation)
+This repo contains some neural speakers mentioned in the paper [2]. The original repository for M2-Transformers is [here](https://github.com/aimagelab/meshed-memory-transformer).
 
-Download Bounding Box Features [here](https://drive.google.com/file/d/1PJyaiuPgPAH8uwkAUzezvli89E4EJFSZ/view?usp=sharing)
+## Data preparation
+Please, prepare annotations and detection features files for the ArtEmis dataset to run the code:
+1. Download [Detection-Features](https://drive.google.com/file/d/1PJyaiuPgPAH8uwkAUzezvli89E4EJFSZ/view?usp=sharing) and unzip it to some folder. Features are computed with the code provided by [1].
+2. Download [ pickle file](https://drive.google.com/file/d/1gjzGK-D9bqxPjjvYdM51sJSm3Vzvh59G/view?usp=sharing) which contains [<image_name>, <image_id>], and put it in the same folder where you have extracted detection features.
+3. Download ArtEmis dataset.
+4. Download vocabulary files [1](https://drive.google.com/file/d/1Diy2WRzZrQfTo7j2GdgTiDrY37s98slq/view?usp=sharing), [2](https://drive.google.com/file/d/1tm8gPufGErFe787pH4VBcHSvWw360NOK/view?usp=sharing)
 
-<p align="center">
-  <img src="images/teaser.png" alt="Meshed-Memory Transformer" width="100%"/>
+Some bounding box visualizations for art images: 
+<p align=“center”>
+<img src=“images/art_bbox.jpeg” alt=“BBox Features” width=“850”/>
 </p>
-<!-- 
-## Environment setup
-Clone the repository and create the `m2release` conda environment using the `environment.yml` file:
+
+## Environment Setup
+Clone the repository and create the `artemis-m2` conda environment using the `environment.yml` file:
 ```
 conda env create -f environment.yml
-conda activate m2release
+conda activate artemis-m2
 ```
 
 Then download spacy data by executing the following command:
 ```
 python -m spacy download en
 ```
-
-Note: Python 3.6 is required to run our code. 
-
-
-## Data preparation
-To run the code, annotations and detection features for the COCO dataset are needed. Please download the annotations file [annotations.zip](https://drive.google.com/file/d/1i8mqKFKhqvBr8kEp3DbIh9-9UNAfKGmE/view?usp=sharing) and extract it.
-
-Detection features are computed with the code provided by [1]. To reproduce our result, please download the COCO features file [coco_detections.hdf5](https://drive.google.com/open?id=1MV6dSnqViQfyvgyHrmAT_lLpFbkzp3mx) (~53.5 GB), in which detections of each image are stored under the `<image_id>_features` key. `<image_id>` is the id of each COCO image, without leading zeros (e.g. the `<image_id>` for `COCO_val2014_000000037209.jpg` is `37209`), and each value should be a `(N, 2048)` tensor, where `N` is the number of detections. 
-
-
-## Evaluation
-To reproduce the results reported in our paper, download the pretrained model file [meshed_memory_transformer.pth](https://drive.google.com/file/d/1naUSnVqXSMIdoiNz_fjqKwh9tXF7x8Nx/view?usp=sharing) and place it in the code folder.
-
-Run `python test.py` using the following arguments:
-
-| Argument | Possible values |
-|------|------|
-| `--batch_size` | Batch size (default: 10) |
-| `--workers` | Number of workers (default: 0) |
-| `--features_path` | Path to detection features file |
-| `--annotation_folder` | Path to folder with COCO annotations |
-
-#### Expected output
-Under `output_logs/`, you may also find the expected output of the evaluation code.
-
 
 ## Training procedure
 Run `python train.py` using the following arguments:
@@ -65,17 +40,38 @@ Run `python train.py` using the following arguments:
 | `--resume_best` | If used, the training will be resumed from the best checkpoint. |
 | `--features_path` | Path to detection features file |
 | `--annotation_folder` | Path to folder with COCO annotations |
+| `--use_emotion_labels` | If enabled, emotion labels will be used (default: "False")|
 | `--logs_folder` | Path folder for tensorboard logs (default: "tensorboard_logs")|
 
-For example, to train our model with the parameters used in our experiments, use
+
+To train grounded-version of the model, include additional parameter `--use_emotion_labels=1`.
 ```
-python train.py --exp_name m2_transformer --batch_size 50 --m 40 --head 8 --warmup 10000 --features_path /path/to/features --annotation_folder /path/to/annotations
+python train.py --exp_name <exp_name> --batch_size 50 --m 40 --head 8 --warmup 10000 --features_path /path/to/features --annotation_folder /path/to/annotations/artemis.csv --workers 4 --logs_folder /path/to/logs/folder [--use_emotion_labels=1]
 ```
 
-<p align="center">
-  <img src="images/results.png" alt="Sample Results" width="850"/>
+## Pretrained Models
+Download our pretrained models and put them under `saved_models` folder:
+* [Basic M2 model (trained without emotion labels)](https://drive.google.com/file/d/1bNgOyGfTHUnhbiRCTUkcasMotvgCtW6N/view?usp=sharing)
+* [Grounded M2 model (trained with emotion labels)](https://drive.google.com/file/d/1Flm_Xl60dQoWq2D98ABYR8Ag6tYiD-dk/view?usp=sharing)
+* [Emotion Encoder for Grounded M2 model](https://drive.google.com/file/d/1nV2H8dMcmb3d_njyXtkxppGRcBzzo9t-/view?usp=sharing)
+
+Run `python test.py` using the following arguments:
+
+| Argument | Possible values |
+|------|------|
+| `--batch_size` | Batch size (default: 10) |
+| `--workers` | Number of workers (default: 0) |
+| `--features_path` | Path to detection features file |
+| `--annotation_folder` | Path to folder with COCO annotations |
+
+```
+python test.py --exp_name <exp_name> --features_path /path/to/features --annotation_folder /path/to/annotations/artemis.csv --workers 4 [--use_emotion_labels=1]
+```
+Some generations from the neural speakers:
+<p align=“center”>
+<img src=“images/m2_outputs.jpeg” alt=“M2 outputs” width=“850”/>
 </p>
-
 #### References
-[1] P. Anderson, X. He, C. Buehler, D. Teney, M. Johnson, S. Gould, and L. Zhang. Bottom-up and top-down attention for image captioning and visual question answering. In _Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition_, 2018.
--->
+[1] [Faster R-CNN with model pretrained on Visual Genome](https://github.com/shilrley6/Faster-R-CNN-with-model-pretrained-on-Visual-Genome)
+[2] [ArtEmis: Affective Language for Visual Art (Panos Achlioptas, Maks Ovsjanikov, Kilichbek Haydarov, Mohamed Elhoseiny, Leonidas Guibas)
+](https://arxiv.org/abs/2101.07396)
