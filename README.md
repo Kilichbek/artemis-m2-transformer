@@ -9,8 +9,8 @@ Please, prepare annotations and detection features files for the ArtEmis dataset
 4. Download vocabulary files [1](https://drive.google.com/file/d/1Diy2WRzZrQfTo7j2GdgTiDrY37s98slq/view?usp=sharing), [2](https://drive.google.com/file/d/1tm8gPufGErFe787pH4VBcHSvWw360NOK/view?usp=sharing)
 
 Some bounding box visualizations for art images: 
-<p align=“center”>
-<img src=“images/art_bbox.jpeg” alt=“BBox Features” width=“850”/>
+<p align="center">
+<img src="images/art_bbox.jpeg" alt="BBox Features" width=“850”/>
 </p>
 
 ## Environment Setup
@@ -68,9 +68,10 @@ Run `python test.py` using the following arguments:
 python test.py --exp_name <exp_name> --features_path /path/to/features --annotation_folder /path/to/annotations/artemis.csv --workers 4 [--use_emotion_labels=1]
 ```
 Some generations from the neural speakers:
-<p align=“center”>
-<img src=“images/m2_outputs.jpeg” alt=“M2 outputs” width=“850”/>
+<p align="center">
+<img src="images/m2_outputs.jpeg" alt="M2 outputs" width="850"/>
 </p>
+
 #### References
 [1] [Faster R-CNN with model pretrained on Visual Genome](https://github.com/shilrley6/Faster-R-CNN-with-model-pretrained-on-Visual-Genome)
 [2] [ArtEmis: Affective Language for Visual Art (Panos Achlioptas, Maks Ovsjanikov, Kilichbek Haydarov, Mohamed Elhoseiny, Leonidas Guibas)
